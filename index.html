@@ -1,0 +1,344 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sammy Browser</title>
+<style>
+:root {
+  --bg:#10131d; --panel:#1b2030; --text:#f5f6ff;
+  --muted:#a3abc0; --accent:#8b7cff; --border:#30364a;
+}
+body.light {
+  --bg:#f2f4fb; --panel:#fff; --text:#20243a;
+  --muted:#667085; --accent:#6655df; --border:#dce0eb;
+}
+* {box-sizing:border-box}
+body {
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:Arial,sans-serif; min-height:100vh;
+  transition:.2s;
+}
+header {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:18px 5%; border-bottom:1px solid var(--border);
+}
+.logo {font-size:23px;font-weight:bold}
+.logo span {color:var(--accent)}
+button,input {
+  font:inherit; border:0; border-radius:10px; padding:12px;
+}
+button {
+  background:var(--accent);color:white;cursor:pointer;
+}
+button.secondary {background:var(--panel);color:var(--text);
+  border:1px solid var(--border)}
+main {max-width:1000px;margin:65px auto;padding:20px}
+.hero {text-align:center;margin-bottom:35px}
+.hero h1 {font-size:42px;margin:0 0 10px}
+.hero p {color:var(--muted)}
+.search {
+  display:flex;gap:10px;max-width:700px;margin:25px auto;
+}
+.search input {
+  flex:1;min-width:0;background:var(--panel);
+  color:var(--text);border:1px solid var(--border);
+}
+.section {margin-top:35px}
+.section h2 {font-size:18px}
+.grid {
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:12px;
+}
+.tile,.panel {
+  background:var(--panel);border:1px solid var(--border);
+  border-radius:15px;padding:17px;
+}
+.tile {cursor:pointer;text-align:center}
+.tile:hover {border-color:var(--accent)}
+.tile .emoji {font-size:27px;display:block;margin-bottom:9px}
+.tile small {color:var(--muted)}
+.tabs {display:flex;gap:8px;flex-wrap:wrap;margin-bottom:15px}
+.tab {background:var(--panel);color:var(--text);
+  border:1px solid var(--border)}
+.tab.active {border-color:var(--accent)}
+.tab button {padding:3px 7px;margin-left:8px}
+.item {
+  display:flex;justify-content:space-between;align-items:center;
+  gap:10px;padding:12px 0;border-bottom:1px solid var(--border);
+  overflow-wrap:anywhere;
+}
+.item:last-child {border:0}
+.item a {color:var(--accent);text-decoration:none}
+.actions {display:flex;gap:8px;flex-wrap:wrap}
+input[type=text] {
+  background:var(--bg);color:var(--text);
+  border:1px solid var(--border);
+}
+#pageFrame {
+  width:100%;height:65vh;border:1px solid var(--border);
+  border-radius:12px;background:white;display:none;
+}
+#pageMessage {color:var(--muted);text-align:center}
+footer {text-align:center;color:var(--muted);padding:35px}
+@media(max-width:550px) {
+  main {margin:30px auto}
+  .hero h1 {font-size:32px}
+  header {padding:15px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">🌐 Sammy<span>Browser</span></div>
+  <button class="secondary" onclick="toggleTheme()">☀️ / 🌙 Theme</button>
+</header>
+
+<main>
+  <div class="hero">
+    <h1>Welcome to Sammy Browser</h1>
+    <p>Your little corner of the internet.</p>
+    <div class="search">
+      <input id="searchInput" placeholder="Search Google or enter a website..."
+        onkeydown="if(event.key==='Enter') searchWeb()">
+      <button onclick="searchWeb()">Search</button>
+    </div>
+    <div class="actions" style="justify-content:center">
+      <button class="secondary" onclick="newTab()">＋ New tab</button>
+      <button class="secondary" onclick="bookmarkCurrent()">☆ Bookmark page</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Your tabs</h2>
+    <div class="tabs" id="tabs"></div>
+  </div>
+
+  <div class="section">
+    <h2>Quick links</h2>
+    <div class="grid">
+      <div class="tile" onclick="openSite('https://www.google.com')">
+        <span class="emoji">🔎</span>Google
+      </div>
+      <div class="tile" onclick="openSite('https://www.youtube.com')">
+        <span class="emoji">▶️</span>YouTube
+      </div>
+      <div class="tile" onclick="openSite('https://www.wikipedia.org')">
+        <span class="emoji">📚</span>Wikipedia
+      </div>
+      <div class="tile" onclick="openSite('https://github.com')">
+        <span class="emoji">💻</span>GitHub
+      </div>
+    </div>
+  </div>
+
+  <div class="section panel">
+    <h2>⭐ Bookmarks</h2>
+    <div id="bookmarks">No bookmarks yet.</div>
+  </div>
+
+  <div class="section panel">
+    <h2>🕘 Search history</h2>
+    <div id="history">No searches yet.</div>
+    <button class="secondary" onclick="clearHistory()">Clear history</button>
+  </div>
+
+  <div class="section panel">
+    <h2>🎨 Custom background</h2>
+    <p style="color:var(--muted)">Paste an image URL to set your background.</p>
+    <div class="actions">
+      <input type="text" id="bgInput" placeholder="Image URL" style="flex:1;min-width:160px">
+      <button onclick="setBackground()">Apply</button>
+      <button class="secondary" onclick="resetBackground()">Reset</button>
+    </div>
+  </div>
+
+  <div class="section panel">
+    <h2>🤖 Sammy AI Assistant (demo)</h2>
+    <p style="color:var(--muted)">This is a simple offline demo, not a live AI service.</p>
+    <div class="actions">
+      <input type="text" id="aiInput" placeholder="Ask Sammy something..."
+        style="flex:1;min-width:160px"
+        onkeydown="if(event.key==='Enter') askAI()">
+      <button onclick="askAI()">Ask</button>
+    </div>
+    <p id="aiAnswer"></p>
+  </div>
+
+  <div class="section">
+    <h2>🌍 Website viewer</h2>
+    <p id="pageMessage">Choose a tab or search for something to get started.</p>
+    <iframe id="pageFrame" title="Website viewer"
+      sandbox="allow-forms allow-scripts allow-same-origin allow-popups"></iframe>
+  </div>
+</main>
+
+<footer>Made with 💜 by Sammy | Sammy Browser</footer>
+
+<script>
+const get = key => JSON.parse(localStorage.getItem(key) || "[]");
+const save = (key,value) => localStorage.setItem(key,JSON.stringify(value));
+
+let tabs = [{name:"Home",url:""}];
+let active = 0;
+
+function renderTabs() {
+  document.getElementById("tabs").innerHTML = tabs.map((t,i) =>
+    `<button class="tab ${i===active?'active':''}" onclick="switchTab(${i})">
+      ${escapeHTML(t.name)}
+      <span onclick="event.stopPropagation();closeTab(${i})">×</span>
+    </button>`
+  ).join("");
+}
+
+function escapeHTML(s) {
+  return String(s).replace(/[&<>"']/g,c=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  })[c]);
+}
+
+function switchTab(i) {
+  active=i;
+  renderTabs();
+  showPage(tabs[i].url);
+}
+
+function newTab() {
+  tabs.push({name:"New tab",url:""});
+  active=tabs.length-1;
+  renderTabs();
+  showPage("");
+}
+
+function closeTab(i) {
+  if(tabs.length===1) {
+    tabs=[{name:"Home",url:""}];active=0;
+  } else {
+    tabs.splice(i,1);
+    if(active>=tabs.length) active=tabs.length-1;
+    else if(i<active) active--;
+  }
+  renderTabs();
+  showPage(tabs[active].url);
+}
+
+function searchWeb() {
+  const q=document.getElementById("searchInput").value.trim();
+  if(!q) return;
+  let url;
+  try {
+    const candidate = new URL(q.includes("://")?q:"https://"+q);
+    url = candidate.protocol==="http:" || candidate.protocol==="https:"
+      ? candidate.href : null;
+  } catch { url=null; }
+
+  if(!url || !q.includes(".")) {
+    url="https://www.google.com/search?q="+encodeURIComponent(q);
+  }
+  openSite(url);
+  let history=get("history");
+  history.unshift(q);
+  save("history",history.slice(0,30));
+  renderHistory();
+}
+
+function openSite(url) {
+  tabs[active]={name:url.replace(/^https?:\/\//,"").slice(0,20),url};
+  renderTabs();
+  showPage(url);
+}
+
+function showPage(url) {
+  const frame=document.getElementById("pageFrame");
+  const msg=document.getElementById("pageMessage");
+  if(!url) {
+    frame.style.display="none";
+    msg.style.display="block";
+    msg.textContent="Welcome! Search above or choose a quick link.";
+    return;
+  }
+  frame.style.display="block";
+  msg.style.display="block";
+  msg.textContent="Some websites block embedded viewing. If this page does not load, open it in a new browser tab.";
+  frame.src=url;
+}
+
+function bookmarkCurrent() {
+  const url=tabs[active].url;
+  if(!url) return alert("Open a website first!");
+  let b=get("bookmarks");
+  if(!b.some(x=>x.url===url)) b.push({name:tabs[active].name,url});
+  save("bookmarks",b);
+  renderBookmarks();
+}
+
+function renderBookmarks() {
+  const b=get("bookmarks");
+  document.getElementById("bookmarks").innerHTML=b.length
+    ? b.map((x,i)=>`<div class="item">
+      <a href="${escapeHTML(x.url)}" target="_blank" rel="noopener">${escapeHTML(x.name)}</a>
+      <button class="secondary" onclick="removeBookmark(${i})">Remove</button>
+    </div>`).join("")
+    : "No bookmarks yet.";
+}
+
+function removeBookmark(i) {
+  let b=get("bookmarks");b.splice(i,1);save("bookmarks",b);renderBookmarks();
+}
+
+function renderHistory() {
+  const h=get("history");
+  document.getElementById("history").innerHTML=h.length
+    ? h.map(x=>`<div class="item">${escapeHTML(x)}</div>`).join("")
+    : "No searches yet.";
+}
+
+function clearHistory() {
+  save("history",[]);renderHistory();
+}
+
+function toggleTheme() {
+  document.body.classList.toggle("light");
+  localStorage.setItem("theme",
+    document.body.classList.contains("light")?"light":"dark");
+}
+
+function setBackground() {
+  const url=document.getElementById("bgInput").value.trim();
+  try {
+    const parsed=new URL(url);
+    if(!["http:","https:"].includes(parsed.protocol)) throw Error();
+    document.body.style.backgroundImage=`url("${parsed.href}")`;
+    document.body.style.backgroundSize="cover";
+    document.body.style.backgroundAttachment="fixed";
+    localStorage.setItem("background",parsed.href);
+  } catch { alert("Please enter a valid image URL."); }
+}
+
+function resetBackground() {
+  document.body.style.backgroundImage="";
+  localStorage.removeItem("background");
+}
+
+function askAI() {
+  const q=document.getElementById("aiInput").value.trim();
+  if(!q) return;
+  document.getElementById("aiAnswer").textContent =
+    "I'm currently a demo assistant. A live AI assistant needs a secure AI service connection. You asked: "+q;
+}
+
+if(localStorage.getItem("theme")==="light")
+  document.body.classList.add("light");
+const bg=localStorage.getItem("background");
+if(bg) {
+  document.body.style.backgroundImage=`url("${bg}")`;
+  document.body.style.backgroundSize="cover";
+  document.body.style.backgroundAttachment="fixed";
+}
+renderTabs();
+renderBookmarks();
+renderHistory();
+</script>
+</body>
+</html>
